@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Data Sales per Bulan</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="loginPage" class="card">
+    <h3>Login</h3>
+    <input id="username" placeholder="Username" autocomplete="username" />
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+    <div id="loginStatus" class="muted" style="display:none"></div>
+    <button id="btnLogin">Masuk</button>
+    <div class="small">Masuk untuk melihat data sales per bulan</div>
+  </div>
+
+  <!-- DATA PAGE -->
+  <div id="dataPage" class="card hidden" style="width:760px; max-width:100%">
+    <h3>Data Per Bulan</h3>
+    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="bulan" style="flex:1;min-width:160px"></select>
+      <select id="tahun" style="width:140px"></select>
+      <button id="btnTampilkan" style="width:160px">Tampilkan</button>
+      <button id="btnLogout" style="width:110px;background:#f5f5f5">Logout</button>
+    </div>
+
+    <div style="overflow:auto;max-height:420px">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Hari</th>
+            <th>Month To Date</th>
+            <th>Budget/Hari</th>
+            <th>Over/Loss</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="tableMsg" class="small" style="margin-top:10px"></div>
+  </div>
+
+<script>
+
+</script>
+</body>
+</html>

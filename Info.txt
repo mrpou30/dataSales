@@ -1,0 +1,58 @@
+// ----------------- AMBIL DATA (GET) -----------------  
+function doGet(e){  
+  try {  
+    const bulan = e.parameter.bulan;  
+    const tahun = e.parameter.tahun;  
+    if(!bulan || !tahun) return jsonResponse([]);  
+  
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID_DATA);  
+    const sh = ss.getSheetByName("Data Bulanan");  
+    if(!sh) return jsonResponse([]);  
+  
+    const vals = sh.getDataRange().getValues(); // termasuk header baris 1  
+    const results = [];  
+    // Asumsi kolom:  
+    // A: tanggal (Date atau text), B: hari, C: mtd, D: budget, E: overloss, F: persen  
+    for(let i=1; i<vals.length; i++){  
+      const row = vals[i];  
+      let tanggalCell = row[0];  
+      let dateObj = null;  
+  
+      if(tanggalCell instanceof Date){  
+        dateObj = tanggalCell;  
+      } else if(typeof tanggalCell === "string" && tanggalCell.trim() !== ""){  
+        // coba parse yyyy-mm-dd atau dd/mm/yyyy  
+        const s = tanggalCell.trim();  
+        const m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);  
+        if(m) dateObj = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));  
+        else {  
+          // coba dd/mm/yyyy  
+          const m2 = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);  
+          if(m2) dateObj = new Date(Number(m2[3]), Number(m2[2])-1, Number(m2[1]));  
+          else dateObj = new Date(s); // fallback  
+        }  
+      }  
+  
+      if(!dateObj || isNaN(dateObj.getTime())) continue;  
+  
+      const rowMonth = dateObj.getMonth()+1;  
+      const rowYear = dateObj.getFullYear();  
+  
+      if(Number(rowMonth) === Number(bulan) && Number(rowYear) === Number(tahun)){  
+        results.push({  
+          tanggal: Utilities.formatDate(dateObj, TIMEZONE, "yyyy-MM-dd"), // format konsisten  
+          hari: row[1] || "",  
+          mtd: row[2] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[2])) : "Rp 0",  
+          budget: row[3] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[3])) : "Rp 0",  
+          overloss: row[4] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[4])) : "Rp 0",  
+          persen: row[5] ? (Number(row[5]) * 100).toFixed(2) + "%" : "0%"  
+        });  
+      }  
+    }  
+  
+    return jsonResponse(results);  
+  
+  } catch(err){  
+    return jsonResponse({error: err.message});  
+  }  
+}

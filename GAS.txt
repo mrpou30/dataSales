@@ -1,0 +1,154 @@
+/**
+ * Google Apps Script untuk:
+ * - POST action="login" -> cek ke spreadsheet Users (username + passwordHash)
+ * - GET ?bulan=..&tahun=.. -> ambil data dari spreadsheet Sales
+ *
+ * PENTING:
+ * - Ganti SPREADSHEET_ID_USERS & SPREADSHEET_ID_DATA
+ * - Pastikan sheet "Users" dan "Sales" ada dengan format yang dijelaskan
+ */
+
+// ----------------- CONFIG -----------------
+const SPREADSHEET_ID_USERS = "1xQnvmir2nYLtjECG00AjbNVp8ZyWULaYuoDrdFb8Oak";
+const SPREADSHEET_ID_DATA  = "1YRcJ3dpz3lKMy_Qblc5bpO8lgSxYr21nuUFWYyZTdLw";
+const TIMEZONE = "Asia/Jakarta"; // untuk format tanggal
+
+// ----------------- HELPERS -----------------
+/**
+ * hash password menggunakan SHA-256 -> hex string
+ */
+function hashPassword(password){
+  const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password, Utilities.Charset.UTF_8);
+  // ubah ke hex
+  return raw.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2,"0")).join("");
+}
+
+/**
+ * create user helper (berjalan server side untuk admin)
+ * panggil dari editor untuk menambah user: createUser('Admin','1234')
+ * menyimpan username di kol A, password hash di kol B
+ */
+function createUser(username, password){
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID_USERS);
+  const sh = ss.getSheetByName("Users") || ss.insertSheet("Users");
+  // jika kosong, tambahkan header
+  if(sh.getLastRow() === 0){
+    sh.appendRow(["Username","PasswordHash"]);
+  }
+  const hashed = hashPassword(password);
+  sh.appendRow([username, hashed]);
+  return {ok:true, username, hash: hashed};
+}
+
+/**
+ * Ambil semua users sebagai objek {username:hash}
+ */
+function getUsersMap(){
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID_USERS);
+  const sh = ss.getSheetByName("Users");
+  if(!sh) return {};
+  const vals = sh.getDataRange().getValues();
+  const map = {};
+  for(let i=1;i<vals.length;i++){
+    const u = String(vals[i][0] || "").trim();
+    const h = String(vals[i][1] || "").trim();
+    if(u) map[u] = h;
+  }
+  return map;
+}
+
+// ----------------- LOGIN (POST) -----------------
+function doPost(e){
+  try {
+    const contents = e.postData && e.postData.contents ? e.postData.contents : null;
+    if(!contents) return jsonResponse({success:false, message:"No post data"});
+
+    const data = JSON.parse(contents);
+
+    if(data.action === "login"){
+      const username = String(data.username || "").trim();
+      const password = String(data.password || "");
+
+      if(!username || !password) return jsonResponse({success:false, message:"Username/password kosong"});
+
+      const users = getUsersMap();
+      if(!users[username]) return jsonResponse({success:false, message:"User tidak ditemukan"});
+
+      const hashed = hashPassword(password);
+      if(hashed === users[username]){
+        return jsonResponse({success:true, message:"Login berhasil"});
+      } else {
+        return jsonResponse({success:false, message:"Password salah"});
+      }
+    }
+
+    return jsonResponse({success:false, message:"Action tidak dikenali"});
+
+  } catch(err){
+    return jsonResponse({success:false, message:"Error: " + err.message});
+  }
+}
+
+// ----------------- AMBIL DATA (GET) -----------------
+function doGet(e){
+  try {
+    const bulan = e.parameter.bulan;
+    const tahun = e.parameter.tahun;
+    if(!bulan || !tahun) return jsonResponse([]);
+
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID_DATA);
+    const sh = ss.getSheetByName("Data Bulanan");
+    if(!sh) return jsonResponse([]);
+
+    const vals = sh.getDataRange().getValues(); // termasuk header baris 1
+    const results = [];
+    // Asumsi kolom:
+    // A: tanggal (Date atau text), B: hari, C: mtd, D: budget, E: overloss, F: persen
+    for(let i=1; i<vals.length; i++){
+      const row = vals[i];
+      let tanggalCell = row[0];
+      let dateObj = null;
+
+      if(tanggalCell instanceof Date){
+        dateObj = tanggalCell;
+      } else if(typeof tanggalCell === "string" && tanggalCell.trim() !== ""){
+        // coba parse yyyy-mm-dd atau dd/mm/yyyy
+        const s = tanggalCell.trim();
+        const m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+        if(m) dateObj = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+        else {
+          // coba dd/mm/yyyy
+          const m2 = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+          if(m2) dateObj = new Date(Number(m2[3]), Number(m2[2])-1, Number(m2[1]));
+          else dateObj = new Date(s); // fallback
+        }
+      }
+
+      if(!dateObj || isNaN(dateObj.getTime())) continue;
+
+      const rowMonth = dateObj.getMonth()+1;
+      const rowYear = dateObj.getFullYear();
+
+      if(Number(rowMonth) === Number(bulan) && Number(rowYear) === Number(tahun)){
+        results.push({
+          tanggal: Utilities.formatDate(dateObj, TIMEZONE, "yyyy-MM-dd"), // format konsisten
+          hari: row[1] || "",  
+          mtd: row[2] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[2])) : "Rp 0",  
+          budget: row[3] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[3])) : "Rp 0",  
+          overloss: row[4] ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(row[4])) : "Rp 0",  
+          persen: row[5] ? (Number(row[5]) * 100).toFixed(2) + "%" : "0%"
+        });
+      }
+    }
+
+    return jsonResponse(results);
+
+  } catch(err){
+    return jsonResponse({error: err.message});
+  }
+}
+
+// ----------------- UTILITY: output JSON -----------------
+function jsonResponse(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}

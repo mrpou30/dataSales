@@ -1,0 +1,46 @@
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:Inter, Arial, sans-serif;
+      background:#e0e5ec;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .card{
+      width:360px;
+      border-radius:18px;
+      padding:26px;
+      background:#e0e5ec;
+      box-shadow:10px 10px 20px #a3b1c6, -10px -10px 20px #ffffff;
+    }
+    h3{color:#30343a;margin-bottom:16px;text-align:center}
+    input, select, button{
+      width:100%;
+      padding:12px;
+      margin-bottom:14px;
+      border-radius:12px;
+      border:none;
+      outline:none;
+      background:#e0e5ec;
+      box-shadow:inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff;
+      font-size:14px;
+      color:#111;
+    }
+    button{
+      cursor:pointer;
+      font-weight:600;
+      box-shadow:4px 4px 10px #a3b1c6, -4px -4px 10px #ffffff;
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    button:active{transform:translateY(1px);
+      box-shadow:inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff;}
+    .hidden{display:none}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+    th,td{border:1px solid #d1d7e0;padding:8px;text-align:center}
+    th{background:#d9dee7}
+    .muted{font-size:13px;color:#b03b3b;text-align:center;margin-bottom:10px}
+    .small{font-size:12px;color:#6d7582;text-align:center;margin-top:8px}
+    /* responsive for small screens */
+    @media (max-width:420px){ .card{width:100%;padding:18px} }
