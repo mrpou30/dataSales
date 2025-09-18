@@ -2,7 +2,7 @@
   IMPORTANT:
   - Ganti WEB_APP_URL sesuai URL Web App (Deploy -> Anyone, get URL)
 */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzTgGHE5VtHBEBIBu8aubHnlfK6jXqTx5c9K_RkSAuvNTPinynQ1bIQ-9lE-lMBdY85/exec"
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzS8lxmff2vrLEod-z-TK83zAFeB12125kJh0Jrn7OIrBLISP5zVfvS5_aMdfOdePbA/exec"
 // ---------- UI refs ----------
 const loginPage = document.getElementById("loginPage");
 const dataPage = document.getElementById("dataPage");
