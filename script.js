@@ -2,7 +2,9 @@
   IMPORTANT:
   - Ganti WEB_APP_URL sesuai URL Web App (Deploy -> Anyone, get URL)
 */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzS8lxmff2vrLEod-z-TK83zAFeB12125kJh0Jrn7OIrBLISP5zVfvS5_aMdfOdePbA/exec"
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzS8lxmff2vrLEod-z-TK83zAFeB12125kJh0Jrn7OIrBLISP5zVfvS5_aMdfOdePbA/exec";
+// HAPUS SPASI DI AKHIR URL — INI PENYEBAB ERROR FETCH!
+
 // ---------- UI refs ----------
 const loginPage = document.getElementById("loginPage");
 const dataPage = document.getElementById("dataPage");
